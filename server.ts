@@ -20,6 +20,15 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.set('trust proxy', 1);
+
+// Middleware
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable for Vite dev
+}));
+app.use(cors());
+app.use(express.json());
+app.use(morgan("dev"));
+
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -156,14 +165,6 @@ if (profileCount.count === 0) {
   db.prepare("INSERT INTO users (username, password) VALUES (?, ?)").run("admin", hashedPassword);
 }
 
-// Middleware
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable for Vite dev
-}));
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
-
 // Rate Limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -199,20 +200,31 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 // 1. Content API
 app.get("/api/profile", (req, res) => {
-  const profile = db.prepare("SELECT * FROM profile WHERE id = 1").get();
-  res.json(profile);
+  try {
+    const profile = db.prepare("SELECT * FROM profile WHERE id = 1").get();
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json(profile);
+  } catch (e) {
+    console.error("DB Error:", e);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 app.get("/api/projects", (req, res) => {
-  const projects = db.prepare("SELECT * FROM projects ORDER BY order_index ASC").all();
-  const parsedProjects = projects.map((p: any) => ({
-    ...p,
-    stack: JSON.parse(p.stack),
-    highlights: JSON.parse(p.highlights),
-    challenges: JSON.parse(p.challenges),
-    links: JSON.parse(p.links)
-  }));
-  res.json(parsedProjects);
+  try {
+    const projects = db.prepare("SELECT * FROM projects ORDER BY order_index ASC").all();
+    const parsedProjects = projects.map((p: any) => ({
+      ...p,
+      stack: JSON.parse(p.stack),
+      highlights: JSON.parse(p.highlights),
+      challenges: JSON.parse(p.challenges),
+      links: JSON.parse(p.links)
+    }));
+    res.json(parsedProjects);
+  } catch (e) {
+    console.error("DB Error:", e);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // 2. Admin Auth
