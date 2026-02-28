@@ -18,20 +18,9 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-app.set('trust proxy', 1);
-
-// Middleware
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable for Vite dev
-}));
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
-
-const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const PORT = 3000;
 
 // Database Setup
 const db = new Database("impact.db");
@@ -198,120 +187,135 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 // API Routes
 
-// 1. Content API
-app.get("/api/profile", (req, res) => {
-  try {
-    const profile = db.prepare("SELECT * FROM profile WHERE id = 1").get();
-    if (!profile) return res.status(404).json({ error: "Profile not found" });
-    res.json(profile);
-  } catch (e) {
-    console.error("DB Error:", e);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-app.get("/api/projects", (req, res) => {
-  try {
-    const projects = db.prepare("SELECT * FROM projects ORDER BY order_index ASC").all();
-    const parsedProjects = projects.map((p: any) => ({
-      ...p,
-      stack: JSON.parse(p.stack),
-      highlights: JSON.parse(p.highlights),
-      challenges: JSON.parse(p.challenges),
-      links: JSON.parse(p.links)
-    }));
-    res.json(parsedProjects);
-  } catch (e) {
-    console.error("DB Error:", e);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// 2. Admin Auth
-app.post("/api/admin/login", (req, res) => {
-  const { username, password } = req.body;
-  const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username) as any;
-
-  if (user && bcrypt.compareSync(password, user.password)) {
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token });
-  } else {
-    res.status(401).json({ error: { code: 401, message: "Invalid credentials" } });
-  }
-});
-
-// 3. Event Logging
-app.post("/api/events", apiLimiter, (req, res) => {
-  const schema = z.object({
-    eventType: z.string(),
-    page: z.string(),
-    metadata: z.record(z.string(), z.any()).optional()
-  });
-
-  const result = schema.safeParse(req.body);
-  if (!result.success) return res.status(400).json({ error: result.error });
-
-  db.prepare("INSERT INTO events (event_type, page, metadata) VALUES (?, ?, ?)")
-    .run(result.data.eventType, result.data.page, JSON.stringify(result.data.metadata || {}));
-  
-  res.status(201).json({ status: "ok" });
-});
-
-app.get("/api/events/stats", authenticateToken, (req, res) => {
-  const stats = db.prepare(`
-    SELECT event_type, COUNT(*) as count, date(timestamp) as day 
-    FROM events 
-    GROUP BY event_type, day
-    ORDER BY day DESC
-  `).all();
-  res.json(stats);
-});
-
-// 4. Contact
-app.post("/api/contact", contactLimiter, (req, res) => {
-  const schema = z.object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    message: z.string().min(10)
-  });
-
-  const result = schema.safeParse(req.body);
-  if (!result.success) return res.status(400).json({ error: result.error });
-
-  db.prepare("INSERT INTO contacts (name, email, message) VALUES (?, ?, ?)")
-    .run(result.data.name, result.data.email, result.data.message);
-  
-  res.status(201).json({ status: "ok" });
-});
-
-// 5. CV Download
-app.get("/api/cv", (req, res) => {
-  // In a real app, we'd serve a file. For now, redirect or send placeholder.
-  res.json({ url: "/cv-placeholder.pdf", message: "CV placeholder. In production, this would be a real PDF." });
-});
-
-// 6. Admin CRUD (Protected)
-app.put("/api/profile", authenticateToken, (req, res) => {
-  const { name, title, subtitle, pitch, email, linkedin, github, status } = req.body;
-  db.prepare(`
-    UPDATE profile SET 
-    name = ?, title = ?, subtitle = ?, pitch = ?, email = ?, linkedin = ?, github = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = 1
-  `).run(name, title, subtitle, pitch, email, linkedin, github, status);
-  res.json({ status: "ok" });
-});
-
-app.post("/api/projects", authenticateToken, (req, res) => {
-  const { title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links } = req.body;
-  db.prepare(`
-    INSERT INTO projects (title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(title, type, summary, problem, solution, JSON.stringify(stack), JSON.stringify(highlights), JSON.stringify(challenges), architecture_diagram, JSON.stringify(links));
-  res.status(201).json({ status: "ok" });
-});
-
 // Vite Middleware for Development
 async function startServer() {
+  console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode...`);
+  
+  const app = express();
+  app.set('trust proxy', 1);
+
+  // Middleware
+  app.use(helmet({
+      contentSecurityPolicy: false,
+  }));
+  app.use(cors());
+  app.use(express.json());
+  app.use(morgan("dev"));
+
+  // Health check
+  app.get("/api/health", (req, res) => res.json({ status: "ok", env: process.env.NODE_ENV }));
+
+  // 1. Content API
+  app.get("/api/profile", (req, res) => {
+    try {
+      const profile = db.prepare("SELECT * FROM profile WHERE id = 1").get();
+      if (!profile) return res.status(404).json({ error: "Profile not found" });
+      res.json(profile);
+    } catch (e) {
+      console.error("DB Error:", e);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/projects", (req, res) => {
+    try {
+      const projects = db.prepare("SELECT * FROM projects ORDER BY order_index ASC").all();
+      const parsedProjects = projects.map((p: any) => ({
+        ...p,
+        stack: JSON.parse(p.stack),
+        highlights: JSON.parse(p.highlights),
+        challenges: JSON.parse(p.challenges),
+        links: JSON.parse(p.links)
+      }));
+      res.json(parsedProjects);
+    } catch (e) {
+      console.error("DB Error:", e);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // 2. Admin Auth
+  app.post("/api/admin/login", (req, res) => {
+    const { username, password } = req.body;
+    const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username) as any;
+
+    if (user && bcrypt.compareSync(password, user.password)) {
+      const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+      res.json({ token });
+    } else {
+      res.status(401).json({ error: { code: 401, message: "Invalid credentials" } });
+    }
+  });
+
+  // 3. Event Logging
+  app.post("/api/events", apiLimiter, (req, res) => {
+    const schema = z.object({
+      eventType: z.string(),
+      page: z.string(),
+      metadata: z.record(z.string(), z.any()).optional()
+    });
+
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ error: result.error });
+
+    db.prepare("INSERT INTO events (event_type, page, metadata) VALUES (?, ?, ?)")
+      .run(result.data.eventType, result.data.page, JSON.stringify(result.data.metadata || {}));
+    
+    res.status(201).json({ status: "ok" });
+  });
+
+  app.get("/api/events/stats", authenticateToken, (req, res) => {
+    const stats = db.prepare(`
+      SELECT event_type, COUNT(*) as count, date(timestamp) as day 
+      FROM events 
+      GROUP BY event_type, day
+      ORDER BY day DESC
+    `).all();
+    res.json(stats);
+  });
+
+  // 4. Contact
+  app.post("/api/contact", contactLimiter, (req, res) => {
+    const schema = z.object({
+      name: z.string().min(2),
+      email: z.string().email(),
+      message: z.string().min(10)
+    });
+
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ error: result.error });
+
+    db.prepare("INSERT INTO contacts (name, email, message) VALUES (?, ?, ?)")
+      .run(result.data.name, result.data.email, result.data.message);
+    
+    res.status(201).json({ status: "ok" });
+  });
+
+  // 5. CV Download
+  app.get("/api/cv", (req, res) => {
+    res.json({ url: "/cv-placeholder.pdf", message: "CV placeholder." });
+  });
+
+  // 6. Admin CRUD (Protected)
+  app.put("/api/profile", authenticateToken, (req, res) => {
+    const { name, title, subtitle, pitch, email, linkedin, github, status } = req.body;
+    db.prepare(`
+      UPDATE profile SET 
+      name = ?, title = ?, subtitle = ?, pitch = ?, email = ?, linkedin = ?, github = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = 1
+    `).run(name, title, subtitle, pitch, email, linkedin, github, status);
+    res.json({ status: "ok" });
+  });
+
+  app.post("/api/projects", authenticateToken, (req, res) => {
+    const { title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links } = req.body;
+    db.prepare(`
+      INSERT INTO projects (title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(title, type, summary, problem, solution, JSON.stringify(stack), JSON.stringify(highlights), JSON.stringify(challenges), architecture_diagram, JSON.stringify(links));
+    res.status(201).json({ status: "ok" });
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -319,14 +323,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, "dist")));
+    const distPath = path.join(__dirname, "dist");
+    console.log(`Serving static files from: ${distPath}`);
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"), {});
+      res.sendFile(path.join(distPath, "index.html"), {});
     });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
