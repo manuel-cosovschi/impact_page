@@ -1,11 +1,30 @@
-<div align="center">
+# Manuel Cosovschi - Impact Page Backend
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+## Setup
+1. Install dependencies: `npm install`
+2. Set environment variables in `.env` (see `.env.example`)
+3. Run development server: `npm run dev`
 
-  <h1>Built with AI Studio</h2>
+## API Endpoints
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+### Public
+- `GET /api/profile`: Get profile information.
+- `GET /api/projects`: Get list of projects.
+- `POST /api/events`: Log an interaction event.
+- `POST /api/contact`: Send a contact message.
+- `GET /api/cv`: Download CV (placeholder).
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+### Admin (Protected)
+- `POST /api/admin/login`: Login to get JWT.
+- `PUT /api/profile`: Update profile.
+- `POST /api/projects`: Create project.
+- `PUT /api/projects/:id`: Update project.
+- `DELETE /api/projects/:id`: Delete project.
+- `GET /api/events/stats`: Get analytics summary.
 
-</div>
+## Security
+- JWT Authentication for admin routes.
+- Rate limiting on contact and event endpoints.
+- Input validation using Zod.
+- Helmet for security headers.
+- CORS configured for frontend.
