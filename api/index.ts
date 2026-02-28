@@ -16,9 +16,9 @@ const SEED_PROFILE = {
     subtitle: "Proyectos full-stack en producción.",
     pitch:
         "Aprendí construyendo: Desde scripts de automatización hasta aplicaciones web completas durante la carrera. Capacidad para adaptarme a nuevas tecnologías (Node, React, Python) demostrada en proyectos académicos y prácticas. Busco mi primera experiencia formal con ganas de aportar valor desde el primer día y crecer profesionalmente.",
-    email: "manuel.cosovschi@example.com",
-    linkedin: "linkedin.com/in/manuelcosou",
-    github: "github.com/manuelcosou",
+    email: "manucosovschi@gmail.com",
+    linkedin: "linkedin.com/in/manuel-cosovschi",
+    github: "github.com/manuel-cosovschi",
     status: "DISPONIBLE",
 };
 
@@ -44,7 +44,7 @@ const SEED_PROJECTS = [
             "Manejo eficiente de datos GPS",
         ],
         architecture_diagram: "https://picsum.photos/seed/fitnow/800/600",
-        links: { github: "#" },
+        links: { github: "https://github.com/manuel-cosovschi" },
         order_index: 0,
     },
     {
@@ -64,7 +64,7 @@ const SEED_PROJECTS = [
         ],
         challenges: ["Manejo de rangos bloqueados", "UX simplificada"],
         architecture_diagram: "https://picsum.photos/seed/lascanas/800/600",
-        links: { web: "#" },
+        links: { web: "https://github.com/manuel-cosovschi" },
         order_index: 1,
     },
     {
@@ -84,7 +84,7 @@ const SEED_PROJECTS = [
         ],
         challenges: ["Tono de marca consistente", "Manejo de excepciones"],
         architecture_diagram: "https://picsum.photos/seed/bot/800/600",
-        links: { github: "#" },
+        links: { github: "https://github.com/manuel-cosovschi" },
         order_index: 2,
     },
     {
@@ -108,7 +108,7 @@ const SEED_PROJECTS = [
             "Validación de datos",
         ],
         architecture_diagram: "https://picsum.photos/seed/inmuebles/800/600",
-        links: { web: "#" },
+        links: { web: "https://github.com/manuel-cosovschi" },
         order_index: 3,
     },
 ];
