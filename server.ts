@@ -8,20 +8,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
 
 dotenv.config();
-
-// Safely handle __dirname and __filename in case of CJS compilation on Vercel
-let __filename: string;
-let __dirname: string;
-try {
-  __filename = fileURLToPath(import.meta.url);
-  __dirname = path.dirname(__filename);
-} catch (e) {
-  __filename = "";
-  __dirname = "";
-}
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -51,7 +39,7 @@ interface DBAdapter {
   updateProfile(data: Partial<Profile>): void;
   getProjects(): Project[];
   createProject(data: Project): void;
-  getUser(username: string): {username: string, password: string} | null;
+  getUser(username: string): { username: string, password: string } | null;
   createUser(username: string, passwordHash: string): void;
   logEvent(eventType: string, page: string, metadata: any): void;
   getEventStats(): any[];
@@ -150,16 +138,16 @@ class InMemoryAdapter implements DBAdapter {
   getUser(username: string) { return this.users.find(u => u.username === username) || null; }
   createUser(username: string, passwordHash: string) { this.users.push({ username, password: passwordHash }); }
   logEvent(eventType: string, page: string, metadata: any) { this.events.push({ eventType, page, metadata, timestamp: new Date() }); }
-  getEventStats() { 
+  getEventStats() {
     // Simple aggregation
     const counts: Record<string, number> = {};
     this.events.forEach(e => {
-        const key = `${e.eventType}|${e.timestamp.toISOString().split('T')[0]}`;
-        counts[key] = (counts[key] || 0) + 1;
+      const key = `${e.eventType}|${e.timestamp.toISOString().split('T')[0]}`;
+      counts[key] = (counts[key] || 0) + 1;
     });
     return Object.entries(counts).map(([key, count]) => {
-        const [type, day] = key.split('|');
-        return { event_type: type, day, count };
+      const [type, day] = key.split('|');
+      return { event_type: type, day, count };
     });
   }
   saveContact(name: string, email: string, message: string) { this.contacts.push({ name, email, message, timestamp: new Date() }); }
@@ -178,7 +166,7 @@ class SqliteAdapter implements DBAdapter {
   }
 
   private initSchema() {
-     this.db.exec(`
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS profile (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         name TEXT, title TEXT, subtitle TEXT, pitch TEXT, email TEXT, linkedin TEXT, github TEXT, status TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -203,17 +191,17 @@ class SqliteAdapter implements DBAdapter {
     const count = this.db.prepare("SELECT COUNT(*) as count FROM profile").get().count;
     if (count === 0) {
       this.db.prepare(`INSERT INTO profile (id, name, title, subtitle, pitch, email, linkedin, github, status) VALUES (1, @name, @title, @subtitle, @pitch, @email, @linkedin, @github, @status)`).run(SEED_PROFILE);
-      
+
       const insertProject = this.db.prepare(`INSERT INTO projects (title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links, order_index) VALUES (@title, @type, @summary, @problem, @solution, @stack, @highlights, @challenges, @architecture_diagram, @links, @order_index)`);
-      
+
       SEED_PROJECTS.forEach((p, i) => {
         insertProject.run({
-            ...p,
-            stack: JSON.stringify(p.stack),
-            highlights: JSON.stringify(p.highlights),
-            challenges: JSON.stringify(p.challenges),
-            links: JSON.stringify(p.links),
-            order_index: i
+          ...p,
+          stack: JSON.stringify(p.stack),
+          highlights: JSON.stringify(p.highlights),
+          challenges: JSON.stringify(p.challenges),
+          links: JSON.stringify(p.links),
+          order_index: i
         });
       });
 
@@ -230,20 +218,20 @@ class SqliteAdapter implements DBAdapter {
   }
   getProjects() {
     return this.db.prepare("SELECT * FROM projects ORDER BY order_index ASC").all().map((p: any) => ({
-        ...p,
-        stack: JSON.parse(p.stack),
-        highlights: JSON.parse(p.highlights),
-        challenges: JSON.parse(p.challenges),
-        links: JSON.parse(p.links)
+      ...p,
+      stack: JSON.parse(p.stack),
+      highlights: JSON.parse(p.highlights),
+      challenges: JSON.parse(p.challenges),
+      links: JSON.parse(p.links)
     }));
   }
   createProject(data: Project) {
     this.db.prepare(`INSERT INTO projects (title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links) VALUES (@title, @type, @summary, @problem, @solution, @stack, @highlights, @challenges, @architecture_diagram, @links)`).run({
-        ...data,
-        stack: JSON.stringify(data.stack),
-        highlights: JSON.stringify(data.highlights),
-        challenges: JSON.stringify(data.challenges),
-        links: JSON.stringify(data.links)
+      ...data,
+      stack: JSON.stringify(data.stack),
+      highlights: JSON.stringify(data.highlights),
+      challenges: JSON.stringify(data.challenges),
+      links: JSON.stringify(data.links)
     });
   }
   getUser(username: string) { return this.db.prepare("SELECT * FROM users WHERE username = ?").get(username); }
@@ -267,12 +255,12 @@ let db: DBAdapter = new InMemoryAdapter();
 const initDB = async () => {
   try {
     if (process.env.VERCEL) {
-        console.log("Vercel environment detected. Using InMemoryAdapter to avoid native module issues.");
-        db = new InMemoryAdapter();
+      console.log("Vercel environment detected. Using InMemoryAdapter to avoid native module issues.");
+      db = new InMemoryAdapter();
     } else {
-        const sqlitePackage = "better-sqlite3";
-        const DatabaseClass = (await import(sqlitePackage)).default;
-        db = new SqliteAdapter(DatabaseClass, "impact.db");
+      const sqlitePackage = "better-sqlite3";
+      const DatabaseClass = (await import(sqlitePackage)).default;
+      db = new SqliteAdapter(DatabaseClass, "impact.db");
     }
   } catch (e) {
     console.warn("Failed to load better-sqlite3 or initialize SQLite. Falling back to InMemoryAdapter.", e);
@@ -369,12 +357,12 @@ const startServer = async () => {
     app.use(viteServer.middlewares);
   } else {
     if (!process.env.VERCEL) {
-        const distPath = path.join(__dirname, "dist");
-        app.use(express.static(distPath));
-        app.get("*", (req, res) => {
-          if (req.path.startsWith('/api')) return res.status(404).json({error: 'Not Found'});
-          res.sendFile(path.join(distPath, "index.html"));
-        });
+      const distPath = path.join(process.cwd(), "dist");
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not Found' });
+        res.sendFile(path.join(distPath, "index.html"));
+      });
     }
   }
   app.listen(PORT, "0.0.0.0", () => {
@@ -382,6 +370,7 @@ const startServer = async () => {
   });
 };
 
-if (process.argv[1] === __filename) {
+const isExecutedDirectly = process.argv[1] && (process.argv[1].endsWith('server.ts') || process.argv[1].endsWith('server.js') || process.argv[1].endsWith('index.js'));
+if (isExecutedDirectly) {
   startServer();
 }
