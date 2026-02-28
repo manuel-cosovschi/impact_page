@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import cors from "cors";
 import helmet from "helmet";
@@ -13,8 +12,16 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Safely handle __dirname and __filename in case of CJS compilation on Vercel
+let __filename: string;
+let __dirname: string;
+try {
+  __filename = fileURLToPath(import.meta.url);
+  __dirname = path.dirname(__filename);
+} catch (e) {
+  __filename = "";
+  __dirname = "";
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -255,26 +262,26 @@ class SqliteAdapter implements DBAdapter {
 
 // --- INITIALIZATION ---
 
-let db: DBAdapter;
+let db: DBAdapter = new InMemoryAdapter();
 
-try {
-  // Try to load better-sqlite3 dynamically
-  // On Vercel, this might fail or we might want to skip it if we detect Vercel environment
-  // But Vercel environment variable is not always reliable for "capabilities"
-  // We'll try-catch the import.
-  
-  if (process.env.VERCEL) {
-      console.log("Vercel environment detected. Using InMemoryAdapter to avoid native module issues.");
-      db = new InMemoryAdapter();
-  } else {
-      // Use top-level await for dynamic import
-      const DatabaseClass = (await import("better-sqlite3")).default;
-      db = new SqliteAdapter(DatabaseClass, "impact.db");
+const initDB = async () => {
+  try {
+    if (process.env.VERCEL) {
+        console.log("Vercel environment detected. Using InMemoryAdapter to avoid native module issues.");
+        db = new InMemoryAdapter();
+    } else {
+        const sqlitePackage = "better-sqlite3";
+        const DatabaseClass = (await import(sqlitePackage)).default;
+        db = new SqliteAdapter(DatabaseClass, "impact.db");
+    }
+  } catch (e) {
+    console.warn("Failed to load better-sqlite3 or initialize SQLite. Falling back to InMemoryAdapter.", e);
+    db = new InMemoryAdapter();
   }
-} catch (e) {
-  console.warn("Failed to load better-sqlite3 or initialize SQLite. Falling back to InMemoryAdapter.", e);
-  db = new InMemoryAdapter();
-}
+};
+
+// Initialize DB immediately (won't block exports, but will run)
+initDB();
 
 // --- ROUTES ---
 
@@ -357,8 +364,9 @@ app.all("/api/*", (req, res) => {
 // Start Server
 const startServer = async () => {
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
-    app.use(vite.middlewares);
+    const vite = await import("vite");
+    const viteServer = await vite.createServer({ server: { middlewareMode: true }, appType: "spa" });
+    app.use(viteServer.middlewares);
   } else {
     if (!process.env.VERCEL) {
         const distPath = path.join(__dirname, "dist");
