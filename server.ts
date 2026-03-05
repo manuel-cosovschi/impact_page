@@ -57,7 +57,7 @@ const SEED_PROFILE = {
   id: 1,
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Estudiante avanzado + buscando primer rol formal',
+  subtitle: 'Estudiante avanzado de Ingeniería en Sistemas',
   pitch: 'He construido proyectos end-to-end (app, APIs y automatizaciones) para aprender haciendo, iterar y mejorar con feedback.',
   email: 'manuel.cosovschi@example.com',
   linkedin: 'linkedin.com/in/manuelcosou',
