@@ -56,7 +56,7 @@ interface Project {
 const FALLBACK_PROFILE: Profile = {
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Estudiante avanzado + buscando primer rol formal',
+  subtitle: 'Estudiante avanzado de Ingeniería en Sistemas',
   pitch: 'He construido proyectos end-to-end (app, APIs y automatizaciones) para aprender haciendo, iterar y mejorar con feedback.',
   email: 'manuel.cosovschi@example.com',
   linkedin: 'linkedin.com/in/manuelcosou',
@@ -133,7 +133,7 @@ export default function App() {
 
   const handleCopyPitch = () => {
     const summary = `
-- Estudiante avanzado + buscando primer rol formal
+- Estudiante avanzado de Ingeniería en Sistemas
 - Proyectos reales (FitNow, Las Cañas web, bot WhatsApp, prácticas Inmuebles)
 - Cómo trabajo: claridad, iteración, mantenibilidad, feedback
 - Cierre: me entusiasma aprender rápido y aportar desde el día uno con guía del equipo
