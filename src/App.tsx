@@ -56,8 +56,8 @@ interface Project {
 const FALLBACK_PROFILE: Profile = {
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Estudiante avanzado de Ingeniería en Sistemas',
-  pitch: 'He construido proyectos end-to-end (app, APIs y automatizaciones) para aprender haciendo, iterar y mejorar con feedback.',
+  subtitle: 'Candidato para Naranja X',
+  pitch: 'Me entusiasma la oportunidad en Naranja X porque comparto su enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
   email: 'manuel.cosovschi@example.com',
   linkedin: 'linkedin.com/in/manuelcosou',
   github: 'github.com/manuelcosou',
@@ -81,13 +81,6 @@ const FALLBACK_PROJECTS: Project[] = [
 ];
 
 // --- Components ---
-
-const StatusBadge = ({ online }: { online: boolean }) => (
-  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border ${online ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
-    <div className={`size-1.5 rounded-full ${online ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-    API {online ? 'ONLINE' : 'OFFLINE (FALLBACK)'}
-  </div>
-);
 
 export default function App() {
   const [profile, setProfile] = useState<Profile>(FALLBACK_PROFILE);
@@ -135,8 +128,8 @@ export default function App() {
     const summary = `
 - Estudiante avanzado de Ingeniería en Sistemas
 - Proyectos reales (FitNow, Las Cañas web, bot WhatsApp, prácticas Inmuebles)
-- Cómo trabajo: claridad, iteración, mantenibilidad, feedback
-- Cierre: me entusiasma aprender rápido y aportar desde el día uno con guía del equipo
+- Por qué NX: Me identifico con la cultura de feedback, iteración y foco en el usuario.
+- Objetivo: Aprender rápido, adaptarme al equipo y aportar valor desde el día uno.
     `.trim();
     navigator.clipboard.writeText(summary);
     setCopied(true);
@@ -195,25 +188,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Status Bar */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-[#0b1120]/90 backdrop-blur-sm border-b border-white/5 py-2">
-        <div className="max-w-[1100px] mx-auto px-6 flex items-center justify-between text-[10px] font-mono text-sky-400/80">
-          <div className="flex items-center gap-2">
-            <Terminal size={12} className="animate-pulse" />
-            <span>ESTADO: {profile.status}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <StatusBadge online={isOnline} />
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 w-24 bg-[#0f172a] rounded-full overflow-hidden border border-white/10">
-                <div className="h-full bg-sky-400 w-[85%]" />
-              </div>
-              <span>INGENIERÍA EN CURSO</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <main className="pt-32 pb-20 px-6">
         <div className="max-w-[1100px] mx-auto space-y-24">
           
@@ -236,6 +210,9 @@ export default function App() {
               className="relative z-10 px-8 md:px-12"
             >
               <div className="flex flex-wrap gap-3 mb-6">
+                <span className="bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Apartment size={12} /> Presentación para Naranja X
+                </span>
                 {[
                   { icon: Layers, text: 'Proyectos para aprender haciendo' },
                   { icon: Webhook, text: 'Automatizaciones con n8n/Netlify' },
@@ -266,8 +243,8 @@ export default function App() {
           {/* Pitch Section */}
           <section id="propuesta" className="grid md:grid-cols-12 gap-8 items-start">
             <div className="md:col-span-4">
-              <h2 className="text-3xl font-bold text-white mb-2">La Propuesta</h2>
-              <p className="text-slate-400">Me identifico con varios valores de NX y quiero aprender dentro de ese estilo de trabajo.</p>
+              <h2 className="text-3xl font-bold text-white mb-2">Por qué Naranja X</h2>
+              <p className="text-slate-400">Me identifico con la cultura de NX y busco mi primera experiencia formal en un equipo que impulse el aprendizaje continuo.</p>
             </div>
             <div className="md:col-span-8">
               <motion.div 
