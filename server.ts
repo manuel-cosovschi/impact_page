@@ -57,7 +57,7 @@ const SEED_PROFILE = {
   id: 1,
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Estudiante avanzado de Ingeniería en Sistemas',
+  subtitle: 'Estudiante avanzado + buscando primer rol formal',
   pitch: 'He construido proyectos end-to-end (app, APIs y automatizaciones) para aprender haciendo, iterar y mejorar con feedback.',
   email: 'manuel.cosovschi@example.com',
   linkedin: 'linkedin.com/in/manuelcosou',
@@ -258,10 +258,16 @@ class SqliteAdapter implements DBAdapter {
 let db: DBAdapter;
 
 try {
+  // Try to load better-sqlite3 dynamically
+  // On Vercel, this might fail or we might want to skip it if we detect Vercel environment
+  // But Vercel environment variable is not always reliable for "capabilities"
+  // We'll try-catch the import.
+  
   if (process.env.VERCEL) {
       console.log("Vercel environment detected. Using InMemoryAdapter to avoid native module issues.");
       db = new InMemoryAdapter();
   } else {
+      // Use top-level await for dynamic import
       const DatabaseClass = (await import("better-sqlite3")).default;
       db = new SqliteAdapter(DatabaseClass, "impact.db");
   }
@@ -368,7 +374,6 @@ const startServer = async () => {
   });
 };
 
-startServer().catch(err => {
-  console.error("CRITICAL: Failed to start server:", err);
-  process.exit(1);
-});
+if (process.argv[1] === __filename) {
+  startServer();
+}
