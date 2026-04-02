@@ -56,8 +56,8 @@ interface Project {
 const FALLBACK_PROFILE: Profile = {
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Candidato para Naranja X',
-  pitch: 'Me entusiasma la oportunidad en Naranja X porque comparto su enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
+  subtitle: 'Desarrollador Full Stack | En búsqueda activa',
+  pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
   email: 'manuel.cosovschi@example.com',
   linkedin: 'linkedin.com/in/manuelcosou',
   github: 'github.com/manuelcosou',
@@ -128,7 +128,7 @@ export default function App() {
     const summary = `
 - Estudiante avanzado de Ingeniería en Sistemas
 - Proyectos reales (FitNow, Las Cañas web, bot WhatsApp, prácticas Inmuebles)
-- Por qué NX: Me identifico con la cultura de feedback, iteración y foco en el usuario.
+- Valor diferencial: Me identifico con culturas de feedback, iteración y foco en el usuario.
 - Objetivo: Aprender rápido, adaptarme al equipo y aportar valor desde el día uno.
     `.trim();
     navigator.clipboard.writeText(summary);
@@ -210,8 +210,8 @@ export default function App() {
               className="relative z-10 px-8 md:px-12"
             >
               <div className="flex flex-wrap gap-3 mb-6">
-                <span className="bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Apartment size={12} /> Presentación para Naranja X
+                <span className="bg-sky-400/10 border border-sky-400/20 text-sky-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Fingerprint size={12} /> En búsqueda activa
                 </span>
                 {[
                   { icon: Layers, text: 'Proyectos para aprender haciendo' },
@@ -243,8 +243,8 @@ export default function App() {
           {/* Pitch Section */}
           <section id="propuesta" className="grid md:grid-cols-12 gap-8 items-start">
             <div className="md:col-span-4">
-              <h2 className="text-3xl font-bold text-white mb-2">Por qué Naranja X</h2>
-              <p className="text-slate-400">Me identifico con la cultura de NX y busco mi primera experiencia formal en un equipo que impulse el aprendizaje continuo.</p>
+              <h2 className="text-3xl font-bold text-white mb-2">Mi Propuesta de Valor</h2>
+              <p className="text-slate-400">Busco mi primera experiencia formal en un equipo que impulse el aprendizaje continuo y el crecimiento profesional.</p>
             </div>
             <div className="md:col-span-8">
               <motion.div 
@@ -514,9 +514,9 @@ export default function App() {
                   onClick={() => { logEvent('click_contact'); alert('¡Gracias! Me pondré en contacto pronto.'); }}
                   className="w-full md:w-auto bg-sky-400 hover:bg-sky-500 text-slate-900 px-10 py-5 rounded-xl text-lg font-bold shadow-2xl shadow-sky-400/20 transition-all active:scale-95"
                 >
-                  Nos vemos el Viernes
+                  Hablemos
                 </button>
-                <p className="text-[10px] text-slate-400 font-medium italic">Gracias por la oportunidad. Voy con ganas de aprender, aportar y conocer al equipo.</p>
+                <p className="text-[10px] text-slate-400 font-medium italic">Voy con ganas de aprender, aportar y sumarme a un gran equipo.</p>
               </div>
               <p className="text-center md:text-right text-[10px] font-mono text-slate-600 mt-6 uppercase tracking-widest">
                 © {new Date().getFullYear()} {profile.name}. Portfolio Académico Profesional.
