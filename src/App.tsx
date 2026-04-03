@@ -62,7 +62,7 @@ const FALLBACK_PROFILE: Profile = {
   pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
   email: 'manucosovschi@gmail.com',
   linkedin: 'linkedin.com/in/manuel-cosovschi',
-  github: 'github.com/manuelcosou',
+  github: 'github.com/manuel-cosovschi',
   phone: '+54 223 538 3082',
   status: 'DISPONIBLE'
 };

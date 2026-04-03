@@ -60,7 +60,7 @@ const SEED_PROFILE = {
   pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
   email: 'manucosovschi@gmail.com',
   linkedin: 'linkedin.com/in/manuel-cosovschi',
-  github: 'github.com/manuelcosou',
+  github: 'github.com/manuel-cosovschi',
   phone: '+54 223 538 3082',
   status: 'DISPONIBLE'
 };
@@ -487,103 +487,6 @@ app.get("/api/cv", async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="Manuel_Cosovschi_CV.pdf"');
     res.end(Buffer.from(pdfBytes));
-  } catch (e) {
-    console.error('PDF generation error:', e);
-    res.status(500).json({ error: 'PDF generation failed' });
-  }
-});
-    const doc = new PDFDocument({ margin: 56, size: 'A4' });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="Manuel_Cosovschi_CV.pdf"');
-    doc.pipe(res);
-
-    const W = 595 - 112; // usable width
-
-    // --- Header ---
-    doc.font('Helvetica-Bold').fontSize(22).text('Manuel Cosovschi', { align: 'center' });
-    doc.moveDown(0.3);
-    doc.font('Helvetica').fontSize(9).fillColor('#444')
-      .text('Mar del Plata, BS AS, Arg  •  linkedin.com/in/manuel-cosovschi  •  +54 223 538 3082  •  manucosovschi@gmail.com', { align: 'center' });
-    doc.moveDown(0.6);
-    doc.moveTo(56, doc.y).lineTo(56 + W, doc.y).strokeColor('#999').lineWidth(0.5).stroke();
-    doc.moveDown(0.6);
-
-    // --- Summary ---
-    doc.font('Helvetica-Oblique').fontSize(9.5).fillColor('#222')
-      .text('Software Engineer junior próximo a graduarse, con experiencia práctica en desarrollo de aplicaciones web y mobile full-stack. He desarrollado proyectos reales utilizando Node.js, Express, SwiftUI y bases de datos SQL, participando en el diseño de APIs REST, autenticación y lógica de negocio. Busco incorporarme a un equipo de desarrollo para seguir aprendiendo y aportar valor desde el primer día.', { align: 'justify' });
-    doc.moveDown(0.8);
-    doc.moveTo(56, doc.y).lineTo(56 + W, doc.y).strokeColor('#999').lineWidth(0.5).stroke();
-    doc.moveDown(0.6);
-
-    // --- Section helper ---
-    const section = (title: string) => {
-      doc.font('Helvetica-Bold').fontSize(10).fillColor('#000').text(title.toUpperCase());
-      doc.moveDown(0.15);
-      doc.moveTo(56, doc.y).lineTo(56 + W, doc.y).strokeColor('#ccc').lineWidth(0.4).stroke();
-      doc.moveDown(0.4);
-    };
-
-    const job = (title: string, location: string, period: string, role: string, bullets: string[], italic?: string) => {
-      const y = doc.y;
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#000').text(title, { continued: false });
-      const rightText = `${location} | ${period}`;
-      doc.font('Helvetica-Oblique').fontSize(9).fillColor('#444')
-        .text(rightText, 56, y, { width: W, align: 'right' });
-      doc.moveDown(0.1);
-      doc.font('Helvetica').fontSize(9).fillColor('#222').text(role);
-      if (italic) { doc.moveDown(0.1); doc.font('Helvetica-Oblique').fontSize(8.5).fillColor('#555').text(italic); }
-      doc.moveDown(0.2);
-      bullets.forEach(b => {
-        doc.font('Helvetica').fontSize(9).fillColor('#222')
-          .text(`• ${b}`, { indent: 12, align: 'justify' });
-      });
-      doc.moveDown(0.6);
-    };
-
-    // --- Experiencia ---
-    section('Experiencia Profesional');
-    job('FitNow - Aplicación Fitness (Proyecto de Tesis)', 'Mar del Plata, Argentina', 'Dic 2024 – Actualidad', 'Desarrollador Full-Stack', [
-      'Desarrollé una aplicación mobile full-stack con backend propio para usuarios reales.',
-      'Implementé APIs REST en Node.js/Express, frontend en SwiftUI, MySQL, JWT y geolocalización.'
-    ]);
-    job('Las Cañas Mar de Cobo - Plataforma Web + Bot WhatsApp', 'Mar del Plata, Argentina', 'Ene 2026 – Actualidad', 'Desarrollador Full-Stack', [
-      'Desarrollé una plataforma web de reservas para complejo turístico con automatización de disponibilidad y gestión operativa.',
-      'Implementé un agente de WhatsApp con n8n y Meta API para la gestión automatizada de reservas y consultas frecuentes.'
-    ]);
-    job('Inmuebles Comerciales SRL (Prácticas Profesionales)', 'Mar del Plata, Argentina', 'Jul 2024 – Dic 2024', 'Desarrollador Full-Stack', [
-      'Participé en el desarrollo de una plataforma web inmobiliaria con Angular, SQL y lógica de negocio.'
-    ]);
-    job('Experiencia Laboral Internacional - EE. UU. (Work & Travel Program)', 'Vail/Boston, USA', '2019 – 2025', 'Rental Tech Lead • Lead Barista • Prep/Chief Cook', [
-      'Trabajo en equipos multiculturales, liderazgo operativo y entornos de alta demanda.'
-    ], 'Vail Sports · Delaware North · L.A. Burdick Chocolate');
-
-    // --- Educación ---
-    section('Educación');
-    const edu = (inst: string, loc: string, period: string, desc: string) => {
-      const y = doc.y;
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#000').text(inst);
-      doc.font('Helvetica-Oblique').fontSize(9).fillColor('#444')
-        .text(`${loc} | ${period}`, 56, y, { width: W, align: 'right' });
-      doc.moveDown(0.1);
-      doc.font('Helvetica').fontSize(9).fillColor('#222').text(desc);
-      doc.moveDown(0.5);
-    };
-    edu('Universidad CAECE', 'Mar del Plata, Argentina', 'Mar 2019 – Jul 2026', 'Ingeniería en Sistemas | Promedio: 7.07 | Finalizando: 1 materia pendiente.');
-    edu('CEM English Institute', 'Mar del Plata, Argentina', 'Mar 2014 – Dic 2017', 'Inglés Avanzado');
-    edu('Coderhouse - Desarrollo Web', 'Mar del Plata, Argentina', 'Mar 2022 – Jun 2022', 'Curso de Desarrollo Web Full Stack');
-
-    // --- Habilidades ---
-    section('Habilidades');
-    doc.font('Helvetica').fontSize(9).fillColor('#222')
-      .text('Node.js · Express · JavaScript · SwiftUI · SQL · MySQL · Git · REST APIs · JWT · Postman · VS Code · React · n8n');
-    doc.moveDown(0.8);
-
-    // --- Idiomas ---
-    section('Idiomas');
-    doc.font('Helvetica').fontSize(9).fillColor('#222')
-      .text('Español: Nativo · Inglés: C1/C2 (fluido, experiencia laboral en EE. UU.)');
-
-    doc.end();
   } catch (e) {
     console.error('PDF generation error:', e);
     res.status(500).json({ error: 'PDF generation failed' });
