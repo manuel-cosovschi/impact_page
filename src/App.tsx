@@ -471,13 +471,18 @@ export default function App() {
                           </div>
                         ))}
                       </div>
-                      <button 
-                        onClick={() => logEvent('open_project', { id: project.id })}
-                        className="text-white hover:text-sky-400 font-bold text-sm flex items-center gap-2 transition-all group/btn"
-                      >
-                        Ver Arquitectura 
-                        <ArrowForward size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                      </button>
+                      {(project.links.web || project.links.github) && project.links.web !== '#' && project.links.github !== '#' ? (
+                        <a
+                          href={project.links.web || project.links.github || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => logEvent('open_project', { id: project.id })}
+                          className="text-white hover:text-sky-400 font-bold text-sm flex items-center gap-2 transition-all group/btn"
+                        >
+                          Ver Proyecto
+                          <ArrowForward size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                        </a>
+                      ) : null}
                     </div>
                   </div>
                 </motion.article>

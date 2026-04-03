@@ -333,21 +333,21 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
   const result = schema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error });
   const { name, email, message } = result.data;
-  db.saveContact(name, email, message);
-  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  try { db.saveContact(name, email, message); } catch (e) { console.error('DB save error:', e); }
+  if (process.env.RESEND_API_KEY) {
     try {
-      const nodemailer = await import('nodemailer');
-      const transporter = nodemailer.default.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-      });
-      await transporter.sendMail({
-        from: `"Portfolio" <${process.env.EMAIL_USER}>`,
-        to: 'manucosovschi@gmail.com',
-        subject: `Nuevo mensaje de ${name} — Portfolio`,
-        html: `<h2>Nuevo contacto desde tu portfolio</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'Portfolio <onboarding@resend.dev>',
+          to: ['manucosovschi@gmail.com'],
+          subject: `Nuevo mensaje de ${name} — Portfolio`,
+          html: `<h2>Nuevo contacto desde tu portfolio</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
+        })
       });
     } catch (e) {
       console.error('Email send error:', e);
@@ -358,7 +358,140 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
 
 app.get("/api/cv", async (req, res) => {
   try {
-    const { default: PDFDocument } = await import('pdfkit') as any;
+    const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4
+    const { width, height } = page.getSize();
+    const margin = 56;
+    const W = width - margin * 2;
+
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontReg  = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontItal = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+
+    let y = height - margin;
+    const black = rgb(0, 0, 0);
+    const gray  = rgb(0.27, 0.27, 0.27);
+    const lgray = rgb(0.6, 0.6, 0.6);
+
+    const drawText = (text: string, x: number, yPos: number, font: any, size: number, color = black) => {
+      page.drawText(text, { x, y: yPos, font, size, color });
+    };
+
+    const drawLine = (yPos: number, opacity = 0.4) => {
+      page.drawLine({ start: { x: margin, y: yPos }, end: { x: margin + W, y: yPos }, thickness: 0.5, color: lgray, opacity });
+    };
+
+    const section = (title: string) => {
+      y -= 14;
+      drawText(title.toUpperCase(), margin, y, fontBold, 9, black);
+      y -= 4;
+      drawLine(y);
+      y -= 10;
+    };
+
+    const wrap = (text: string, font: any, size: number, maxW: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let line = '';
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (font.widthOfTextAtSize(test, size) > maxW) { lines.push(line); line = word; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      return lines;
+    };
+
+    const drawWrapped = (text: string, x: number, font: any, size: number, maxW: number, lineH: number, color = black) => {
+      const lines = wrap(text, font, size, maxW);
+      lines.forEach(l => { drawText(l, x, y, font, size, color); y -= lineH; });
+    };
+
+    const bullet = (text: string) => {
+      drawText('•', margin + 6, y, fontReg, 9, gray);
+      drawWrapped(text, margin + 18, fontReg, 9, W - 18, 13, gray);
+    };
+
+    const job = (title: string, right: string, role: string, bullets: string[], italic?: string) => {
+      drawText(title, margin, y, fontBold, 9.5);
+      const rW = fontItal.widthOfTextAtSize(right, 8.5);
+      drawText(right, margin + W - rW, y, fontItal, 8.5, gray);
+      y -= 13;
+      drawText(role, margin, y, fontReg, 9, gray);
+      y -= 13;
+      if (italic) { drawText(italic, margin, y, fontItal, 8.5, rgb(0.4,0.4,0.4)); y -= 12; }
+      bullets.forEach(b => bullet(b));
+      y -= 4;
+    };
+
+    const edu = (inst: string, right: string, desc: string) => {
+      drawText(inst, margin, y, fontBold, 9.5);
+      const rW = fontItal.widthOfTextAtSize(right, 8.5);
+      drawText(right, margin + W - rW, y, fontItal, 8.5, gray);
+      y -= 13;
+      drawText(desc, margin, y, fontReg, 9, gray);
+      y -= 16;
+    };
+
+    // --- Header ---
+    const nameText = 'Manuel Cosovschi';
+    const nameW = fontBold.widthOfTextAtSize(nameText, 22);
+    drawText(nameText, (width - nameW) / 2, y, fontBold, 22);
+    y -= 28;
+    const contact = 'Mar del Plata, BS AS, Arg  •  linkedin.com/in/manuel-cosovschi  •  +54 223 538 3082  •  manucosovschi@gmail.com';
+    const contW = fontReg.widthOfTextAtSize(contact, 8.5);
+    drawText(contact, (width - contW) / 2, y, fontReg, 8.5, gray);
+    y -= 10;
+    drawLine(y);
+    y -= 10;
+
+    // --- Summary ---
+    drawWrapped('Software Engineer junior próximo a graduarse, con experiencia práctica en desarrollo de aplicaciones web y mobile full-stack. He desarrollado proyectos reales utilizando Node.js, Express, SwiftUI y bases de datos SQL. Busco incorporarme a un equipo de desarrollo para seguir aprendiendo y aportar valor desde el primer día.', margin, fontItal, 9.5, W, 14, gray);
+    y -= 4;
+    drawLine(y);
+
+    // --- Experiencia ---
+    section('Experiencia Profesional');
+    job('FitNow - Aplicación Fitness (Proyecto de Tesis)', 'Mar del Plata  |  Dic 2024 – Actualidad', 'Desarrollador Full-Stack', [
+      'Desarrollé una aplicación mobile full-stack con backend propio para usuarios reales.',
+      'Implementé APIs REST en Node.js/Express, frontend en SwiftUI, MySQL, JWT y geolocalización.'
+    ]);
+    job('Las Cañas Mar de Cobo - Web + Bot WhatsApp', 'Mar del Plata  |  Ene 2026 – Actualidad', 'Desarrollador Full-Stack', [
+      'Plataforma web de reservas para complejo turístico con automatización de disponibilidad.',
+      'Agente de WhatsApp con n8n y Meta API para gestión automatizada de reservas y consultas.'
+    ]);
+    job('Inmuebles Comerciales SRL (Prácticas Profesionales)', 'Mar del Plata  |  Jul 2024 – Dic 2024', 'Desarrollador Full-Stack', [
+      'Participé en el desarrollo de una plataforma web inmobiliaria con Angular, SQL y lógica de negocio.'
+    ]);
+    job('Experiencia Internacional - EE. UU. (Work & Travel Program)', 'Vail/Boston  |  2019 – 2025', 'Rental Tech Lead  •  Lead Barista  •  Prep/Chief Cook', [
+      'Trabajo en equipos multiculturales, liderazgo operativo y entornos de alta demanda.'
+    ], 'Vail Sports · Delaware North · L.A. Burdick Chocolate');
+
+    // --- Educación ---
+    section('Educación');
+    edu('Universidad CAECE', 'Mar del Plata  |  Mar 2019 – Jul 2026', 'Ingeniería en Sistemas  |  Promedio: 7.07  |  Finalizando: 1 materia pendiente.');
+    edu('CEM English Institute', 'Mar del Plata  |  Mar 2014 – Dic 2017', 'Inglés Avanzado (C1/C2)');
+    edu('Coderhouse - Desarrollo Web', 'Mar del Plata  |  Mar 2022 – Jun 2022', 'Curso de Desarrollo Web Full Stack');
+
+    // --- Habilidades ---
+    section('Habilidades');
+    drawWrapped('Node.js · Express · JavaScript · SwiftUI · SQL · MySQL · Git · REST APIs · JWT · Postman · VS Code · React · n8n', margin, fontReg, 9, W, 13, gray);
+    y -= 6;
+
+    // --- Idiomas ---
+    section('Idiomas');
+    drawText('Español: Nativo  ·  Inglés: C1/C2 (fluido, experiencia laboral en EE. UU.)', margin, y, fontReg, 9, gray);
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Manuel_Cosovschi_CV.pdf"');
+    res.end(Buffer.from(pdfBytes));
+  } catch (e) {
+    console.error('PDF generation error:', e);
+    res.status(500).json({ error: 'PDF generation failed' });
+  }
+});
     const doc = new PDFDocument({ margin: 56, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="Manuel_Cosovschi_CV.pdf"');
