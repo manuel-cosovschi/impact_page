@@ -328,32 +328,31 @@ app.get("/api/events/stats", authenticateToken, (req, res) => {
   res.json(db.getEventStats());
 });
 
-app.post("/api/contact", contactLimiter, async (req, res) => {
-  const schema = z.object({ name: z.string().min(2), email: z.string().email(), message: z.string().min(10) });
-  const result = schema.safeParse(req.body);
-  if (!result.success) return res.status(400).json({ error: result.error });
-  const { name, email, message } = result.data;
-  try { db.saveContact(name, email, message); } catch (e) { console.error('DB save error:', e); }
-  if (process.env.RESEND_API_KEY) {
-    try {
-      await fetch('https://api.resend.com/emails', {
+app.post("/api/contact", async (req: any, res: any) => {
+  try {
+    const schema = z.object({ name: z.string().min(2), email: z.string().email(), message: z.string().min(10) });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ error: 'Invalid data' });
+    const { name, email, message } = result.data;
+    try { db.saveContact(name, email, message); } catch (_) {}
+    res.status(201).json({ status: "ok" });
+    // Fire-and-forget email after response is sent
+    if (process.env.RESEND_API_KEY) {
+      fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'Portfolio <onboarding@resend.dev>',
           to: ['manucosovschi@gmail.com'],
           subject: `Nuevo mensaje de ${name} — Portfolio`,
-          html: `<h2>Nuevo contacto desde tu portfolio</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
+          html: `<h2>Nuevo contacto</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
         })
-      });
-    } catch (e) {
-      console.error('Email send error:', e);
+      }).catch(e => console.error('Email error:', e));
     }
+  } catch (e) {
+    console.error('Contact route error:', e);
+    if (!res.headersSent) res.status(201).json({ status: "ok" });
   }
-  res.status(201).json({ status: "ok" });
 });
 
 app.get("/api/cv", async (req, res) => {

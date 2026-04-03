@@ -182,9 +182,145 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownloadCV = () => {
+  const handleDownloadCV = async () => {
     logEvent('download_cv');
-    window.open('/api/cv', '_blank');
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+      const W = 595 - 112;
+      const margin = 56;
+      let y = 56;
+      const black: [number, number, number] = [0, 0, 0];
+      const gray: [number, number, number] = [80, 80, 80];
+
+      const line = () => {
+        doc.setDrawColor(180, 180, 180);
+        doc.line(margin, y, margin + W, y);
+        y += 8;
+      };
+
+      const wrapped = (text: string, x: number, maxW: number, size: number): number => {
+        doc.setFontSize(size);
+        const lines = doc.splitTextToSize(text, maxW) as string[];
+        lines.forEach((l: string) => { doc.text(l, x, y); y += size * 1.4; });
+        return lines.length;
+      };
+
+      // Header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(...black);
+      doc.text('Manuel Cosovschi', 595 / 2, y, { align: 'center' });
+      y += 22;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...gray);
+      doc.text('Mar del Plata, BS AS, Arg  •  linkedin.com/in/manuel-cosovschi  •  +54 223 538 3082  •  manucosovschi@gmail.com', 595 / 2, y, { align: 'center' });
+      y += 12;
+      line();
+
+      // Summary
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9.5);
+      doc.setTextColor(...gray);
+      wrapped('Software Engineer junior próximo a graduarse, con experiencia práctica en desarrollo de aplicaciones web y mobile full-stack. He desarrollado proyectos reales utilizando Node.js, Express, SwiftUI y bases de datos SQL. Busco incorporarme a un equipo de desarrollo para seguir aprendiendo y aportar valor desde el primer día.', margin, W, 9.5);
+      y += 4;
+      line();
+
+      const section = (title: string) => {
+        y += 6;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...black);
+        doc.text(title.toUpperCase(), margin, y);
+        y += 5;
+        line();
+      };
+
+      const job = (title: string, right: string, role: string, bullets: string[], italic?: string) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(...black);
+        doc.text(title, margin, y);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...gray);
+        doc.text(right, margin + W, y, { align: 'right' });
+        y += 13;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text(role, margin, y);
+        y += 13;
+        if (italic) { doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5); doc.text(italic, margin, y); y += 12; }
+        bullets.forEach(b => {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(...gray);
+          const lines = doc.splitTextToSize(`• ${b}`, W - 10) as string[];
+          lines.forEach((l: string, i: number) => { doc.text(l, margin + (i > 0 ? 8 : 0), y); y += 12; });
+        });
+        y += 4;
+      };
+
+      const edu = (inst: string, right: string, desc: string) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(...black);
+        doc.text(inst, margin, y);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...gray);
+        doc.text(right, margin + W, y, { align: 'right' });
+        y += 13;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text(desc, margin, y);
+        y += 16;
+      };
+
+      // Experiencia
+      section('Experiencia Profesional');
+      job('FitNow - Aplicación Fitness (Proyecto de Tesis)', 'Mar del Plata  |  Dic 2024 – Actualidad', 'Desarrollador Full-Stack', [
+        'Desarrollé una aplicación mobile full-stack con backend propio para usuarios reales.',
+        'Implementé APIs REST en Node.js/Express, frontend en SwiftUI, MySQL, JWT y geolocalización.'
+      ]);
+      job('Las Cañas Mar de Cobo - Web + Bot WhatsApp', 'Mar del Plata  |  Ene 2026 – Actualidad', 'Desarrollador Full-Stack', [
+        'Plataforma web de reservas para complejo turístico con automatización de disponibilidad.',
+        'Agente de WhatsApp con n8n y Meta API para gestión automatizada de reservas y consultas.'
+      ]);
+      job('Inmuebles Comerciales SRL (Prácticas Profesionales)', 'Mar del Plata  |  Jul 2024 – Dic 2024', 'Desarrollador Full-Stack', [
+        'Participé en el desarrollo de una plataforma web inmobiliaria con Angular, SQL y lógica de negocio.'
+      ]);
+      job('Experiencia Internacional - EE.UU. (Work & Travel)', 'Vail/Boston  |  2019 – 2025', 'Rental Tech Lead  •  Lead Barista  •  Prep/Chief Cook', [
+        'Trabajo en equipos multiculturales, liderazgo operativo y entornos de alta demanda.'
+      ], 'Vail Sports · Delaware North · L.A. Burdick Chocolate');
+
+      // Educación
+      section('Educación');
+      edu('Universidad CAECE', 'Mar del Plata  |  Mar 2019 – Jul 2026', 'Ingeniería en Sistemas  |  Promedio: 7.07  |  Finalizando: 1 materia pendiente.');
+      edu('CEM English Institute', 'Mar del Plata  |  Mar 2014 – Dic 2017', 'Inglés Avanzado (C1/C2)');
+      edu('Coderhouse - Desarrollo Web', 'Mar del Plata  |  Mar 2022 – Jun 2022', 'Curso de Desarrollo Web Full Stack');
+
+      // Habilidades
+      section('Habilidades');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...gray);
+      doc.text('Node.js · Express · JavaScript · SwiftUI · SQL · MySQL · Git · REST APIs · JWT · Postman · VS Code · React · n8n', margin, y);
+      y += 16;
+
+      // Idiomas
+      section('Idiomas');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...gray);
+      doc.text('Español: Nativo  ·  Inglés: C1/C2 (fluido, experiencia laboral en EE. UU.)', margin, y);
+
+      doc.save('Manuel_Cosovschi_CV.pdf');
+    } catch (e) {
+      console.error('PDF error:', e);
+      window.open('/api/cv', '_blank');
+    }
   };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
