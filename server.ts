@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import cors from "cors";
 import helmet from "helmet";
@@ -10,7 +9,6 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -20,16 +18,6 @@ const __dirname = path.dirname(__filename);
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const PORT = 3000;
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 export const app = express();
 
@@ -348,6 +336,13 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
   db.saveContact(name, email, message);
   if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     try {
+      const nodemailer = await import('nodemailer');
+      const transporter = nodemailer.default.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+      });
       await transporter.sendMail({
         from: `"Portfolio" <${process.env.EMAIL_USER}>`,
         to: 'manucosovschi@gmail.com',
@@ -479,6 +474,7 @@ app.all("/api/*", (req, res) => {
 // Start Server
 const startServer = async () => {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
   } else {
