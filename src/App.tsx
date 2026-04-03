@@ -273,12 +273,13 @@ export default function App() {
               <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/80 to-transparent" />
             </div>
             
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="relative z-10 px-8 md:px-12"
+              className="relative z-10 px-8 md:px-12 flex items-end justify-between gap-8"
             >
+              <div className="flex-1 min-w-0">
               <div className="flex flex-wrap gap-3 mb-6">
                 <span className="bg-sky-400/10 border border-sky-400/20 text-sky-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
                   <Fingerprint size={12} /> En búsqueda activa
@@ -300,13 +301,31 @@ export default function App() {
                 {profile.title} | {profile.subtitle}
               </p>
               <div className="flex flex-wrap gap-4">
-                <a href="#pitch" className="bg-sky-400 hover:bg-sky-500 text-slate-900 px-8 py-3.5 rounded-lg text-base font-bold transition-all shadow-lg shadow-sky-400/20 flex items-center gap-2">
+                <a href="#propuesta" className="bg-sky-400 hover:bg-sky-500 text-slate-900 px-8 py-3.5 rounded-lg text-base font-bold transition-all shadow-lg shadow-sky-400/20 flex items-center gap-2">
                   Ver Propuesta <ArrowDownward size={20} />
                 </a>
                 <button className="bg-[#0f172a] border border-white/10 hover:bg-[#0f172a]/80 text-white px-8 py-3.5 rounded-lg text-base font-bold transition-all flex items-center gap-2">
                   Seleccionar Vista <Tune size={20} />
                 </button>
               </div>
+              </div>
+
+              {/* Profile Photo */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="shrink-0 hidden sm:block"
+              >
+                <div className="size-40 md:size-52 rounded-full overflow-hidden border-2 border-sky-400/30 shadow-2xl shadow-sky-400/10 ring-4 ring-[#020617]">
+                  <img
+                    src="/profile.jpg"
+                    alt="Manuel Cosovschi"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </motion.div>
             </motion.div>
           </section>
 
