@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -19,6 +20,16 @@ const __dirname = path.dirname(__filename);
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const PORT = 3000;
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
 export const app = express();
 
@@ -36,7 +47,7 @@ app.use(morgan("dev"));
 
 // --- DATA ADAPTERS ---
 
-interface Profile { id: number; name: string; title: string; subtitle: string; pitch: string; email: string; linkedin: string; github: string; status: string; }
+interface Profile { id: number; name: string; title: string; subtitle: string; pitch: string; email: string; linkedin: string; github: string; phone?: string; status: string; }
 interface Project { id?: number; title: string; type: string; summary: string; problem: string; solution: string; stack: string[]; highlights: string[]; challenges: string[]; architecture_diagram: string; links: any; order_index?: number; }
 
 interface DBAdapter {
@@ -59,9 +70,10 @@ const SEED_PROFILE = {
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
   subtitle: 'Desarrollador Full Stack | En búsqueda activa',
   pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
-  email: 'manuel.cosovschi@example.com',
-  linkedin: 'linkedin.com/in/manuelcosou',
+  email: 'manucosovschi@gmail.com',
+  linkedin: 'linkedin.com/in/manuel-cosovschi',
   github: 'github.com/manuelcosou',
+  phone: '+54 223 538 3082',
   status: 'DISPONIBLE'
 };
 
@@ -174,7 +186,7 @@ class SqliteAdapter implements DBAdapter {
      this.db.exec(`
       CREATE TABLE IF NOT EXISTS profile (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        name TEXT, title TEXT, subtitle TEXT, pitch TEXT, email TEXT, linkedin TEXT, github TEXT, status TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        name TEXT, title TEXT, subtitle TEXT, pitch TEXT, email TEXT, linkedin TEXT, github TEXT, phone TEXT, status TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
       CREATE TABLE IF NOT EXISTS projects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -195,7 +207,7 @@ class SqliteAdapter implements DBAdapter {
   private seed() {
     const count = this.db.prepare("SELECT COUNT(*) as count FROM profile").get().count;
     if (count === 0) {
-      this.db.prepare(`INSERT INTO profile (id, name, title, subtitle, pitch, email, linkedin, github, status) VALUES (1, @name, @title, @subtitle, @pitch, @email, @linkedin, @github, @status)`).run(SEED_PROFILE);
+      this.db.prepare(`INSERT INTO profile (id, name, title, subtitle, pitch, email, linkedin, github, phone, status) VALUES (1, @name, @title, @subtitle, @pitch, @email, @linkedin, @github, @phone, @status)`).run(SEED_PROFILE);
       
       const insertProject = this.db.prepare(`INSERT INTO projects (title, type, summary, problem, solution, stack, highlights, challenges, architecture_diagram, links, order_index) VALUES (@title, @type, @summary, @problem, @solution, @stack, @highlights, @challenges, @architecture_diagram, @links, @order_index)`);
       
@@ -328,16 +340,126 @@ app.get("/api/events/stats", authenticateToken, (req, res) => {
   res.json(db.getEventStats());
 });
 
-app.post("/api/contact", contactLimiter, (req, res) => {
+app.post("/api/contact", contactLimiter, async (req, res) => {
   const schema = z.object({ name: z.string().min(2), email: z.string().email(), message: z.string().min(10) });
   const result = schema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error });
-  db.saveContact(result.data.name, result.data.email, result.data.message);
+  const { name, email, message } = result.data;
+  db.saveContact(name, email, message);
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    try {
+      await transporter.sendMail({
+        from: `"Portfolio" <${process.env.EMAIL_USER}>`,
+        to: 'manucosovschi@gmail.com',
+        subject: `Nuevo mensaje de ${name} — Portfolio`,
+        html: `<h2>Nuevo contacto desde tu portfolio</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
+      });
+    } catch (e) {
+      console.error('Email send error:', e);
+    }
+  }
   res.status(201).json({ status: "ok" });
 });
 
-app.get("/api/cv", (req, res) => {
-  res.json({ url: "/cv-placeholder.pdf", message: "CV placeholder." });
+app.get("/api/cv", async (req, res) => {
+  try {
+    const { default: PDFDocument } = await import('pdfkit') as any;
+    const doc = new PDFDocument({ margin: 56, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Manuel_Cosovschi_CV.pdf"');
+    doc.pipe(res);
+
+    const W = 595 - 112; // usable width
+
+    // --- Header ---
+    doc.font('Helvetica-Bold').fontSize(22).text('Manuel Cosovschi', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.font('Helvetica').fontSize(9).fillColor('#444')
+      .text('Mar del Plata, BS AS, Arg  •  linkedin.com/in/manuel-cosovschi  •  +54 223 538 3082  •  manucosovschi@gmail.com', { align: 'center' });
+    doc.moveDown(0.6);
+    doc.moveTo(56, doc.y).lineTo(56 + W, doc.y).strokeColor('#999').lineWidth(0.5).stroke();
+    doc.moveDown(0.6);
+
+    // --- Summary ---
+    doc.font('Helvetica-Oblique').fontSize(9.5).fillColor('#222')
+      .text('Software Engineer junior próximo a graduarse, con experiencia práctica en desarrollo de aplicaciones web y mobile full-stack. He desarrollado proyectos reales utilizando Node.js, Express, SwiftUI y bases de datos SQL, participando en el diseño de APIs REST, autenticación y lógica de negocio. Busco incorporarme a un equipo de desarrollo para seguir aprendiendo y aportar valor desde el primer día.', { align: 'justify' });
+    doc.moveDown(0.8);
+    doc.moveTo(56, doc.y).lineTo(56 + W, doc.y).strokeColor('#999').lineWidth(0.5).stroke();
+    doc.moveDown(0.6);
+
+    // --- Section helper ---
+    const section = (title: string) => {
+      doc.font('Helvetica-Bold').fontSize(10).fillColor('#000').text(title.toUpperCase());
+      doc.moveDown(0.15);
+      doc.moveTo(56, doc.y).lineTo(56 + W, doc.y).strokeColor('#ccc').lineWidth(0.4).stroke();
+      doc.moveDown(0.4);
+    };
+
+    const job = (title: string, location: string, period: string, role: string, bullets: string[], italic?: string) => {
+      const y = doc.y;
+      doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#000').text(title, { continued: false });
+      const rightText = `${location} | ${period}`;
+      doc.font('Helvetica-Oblique').fontSize(9).fillColor('#444')
+        .text(rightText, 56, y, { width: W, align: 'right' });
+      doc.moveDown(0.1);
+      doc.font('Helvetica').fontSize(9).fillColor('#222').text(role);
+      if (italic) { doc.moveDown(0.1); doc.font('Helvetica-Oblique').fontSize(8.5).fillColor('#555').text(italic); }
+      doc.moveDown(0.2);
+      bullets.forEach(b => {
+        doc.font('Helvetica').fontSize(9).fillColor('#222')
+          .text(`• ${b}`, { indent: 12, align: 'justify' });
+      });
+      doc.moveDown(0.6);
+    };
+
+    // --- Experiencia ---
+    section('Experiencia Profesional');
+    job('FitNow - Aplicación Fitness (Proyecto de Tesis)', 'Mar del Plata, Argentina', 'Dic 2024 – Actualidad', 'Desarrollador Full-Stack', [
+      'Desarrollé una aplicación mobile full-stack con backend propio para usuarios reales.',
+      'Implementé APIs REST en Node.js/Express, frontend en SwiftUI, MySQL, JWT y geolocalización.'
+    ]);
+    job('Las Cañas Mar de Cobo - Plataforma Web + Bot WhatsApp', 'Mar del Plata, Argentina', 'Ene 2026 – Actualidad', 'Desarrollador Full-Stack', [
+      'Desarrollé una plataforma web de reservas para complejo turístico con automatización de disponibilidad y gestión operativa.',
+      'Implementé un agente de WhatsApp con n8n y Meta API para la gestión automatizada de reservas y consultas frecuentes.'
+    ]);
+    job('Inmuebles Comerciales SRL (Prácticas Profesionales)', 'Mar del Plata, Argentina', 'Jul 2024 – Dic 2024', 'Desarrollador Full-Stack', [
+      'Participé en el desarrollo de una plataforma web inmobiliaria con Angular, SQL y lógica de negocio.'
+    ]);
+    job('Experiencia Laboral Internacional - EE. UU. (Work & Travel Program)', 'Vail/Boston, USA', '2019 – 2025', 'Rental Tech Lead • Lead Barista • Prep/Chief Cook', [
+      'Trabajo en equipos multiculturales, liderazgo operativo y entornos de alta demanda.'
+    ], 'Vail Sports · Delaware North · L.A. Burdick Chocolate');
+
+    // --- Educación ---
+    section('Educación');
+    const edu = (inst: string, loc: string, period: string, desc: string) => {
+      const y = doc.y;
+      doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#000').text(inst);
+      doc.font('Helvetica-Oblique').fontSize(9).fillColor('#444')
+        .text(`${loc} | ${period}`, 56, y, { width: W, align: 'right' });
+      doc.moveDown(0.1);
+      doc.font('Helvetica').fontSize(9).fillColor('#222').text(desc);
+      doc.moveDown(0.5);
+    };
+    edu('Universidad CAECE', 'Mar del Plata, Argentina', 'Mar 2019 – Jul 2026', 'Ingeniería en Sistemas | Promedio: 7.07 | Finalizando: 1 materia pendiente.');
+    edu('CEM English Institute', 'Mar del Plata, Argentina', 'Mar 2014 – Dic 2017', 'Inglés Avanzado');
+    edu('Coderhouse - Desarrollo Web', 'Mar del Plata, Argentina', 'Mar 2022 – Jun 2022', 'Curso de Desarrollo Web Full Stack');
+
+    // --- Habilidades ---
+    section('Habilidades');
+    doc.font('Helvetica').fontSize(9).fillColor('#222')
+      .text('Node.js · Express · JavaScript · SwiftUI · SQL · MySQL · Git · REST APIs · JWT · Postman · VS Code · React · n8n');
+    doc.moveDown(0.8);
+
+    // --- Idiomas ---
+    section('Idiomas');
+    doc.font('Helvetica').fontSize(9).fillColor('#222')
+      .text('Español: Nativo · Inglés: C1/C2 (fluido, experiencia laboral en EE. UU.)');
+
+    doc.end();
+  } catch (e) {
+    console.error('PDF generation error:', e);
+    res.status(500).json({ error: 'PDF generation failed' });
+  }
 });
 
 app.put("/api/profile", authenticateToken, (req, res) => {

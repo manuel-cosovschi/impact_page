@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Code, 
-  Download, 
-  Terminal, 
-  Layers, 
-  Webhook, 
-  Lightbulb, 
-  CheckCircle, 
-  School, 
-  Eye as Visibility, 
-  ArrowDown as ArrowDownward, 
-  SlidersHorizontal as Tune, 
-  ArrowRight as ArrowForward, 
-  Building2 as Apartment, 
-  Fingerprint, 
-  Mail, 
-  Link as LinkIcon, 
+import {
+  Code,
+  Download,
+  Terminal,
+  Layers,
+  Webhook,
+  Lightbulb,
+  CheckCircle,
+  School,
+  Eye as Visibility,
+  ArrowDown as ArrowDownward,
+  SlidersHorizontal as Tune,
+  ArrowRight as ArrowForward,
+  Fingerprint,
+  Mail,
+  Link as LinkIcon,
   Github,
   Copy,
   Check,
   Smartphone,
   Cpu,
   Layout,
-  MessageSquare
+  Phone,
+  X,
+  Send
 } from 'lucide-react';
 
 // --- Types ---
@@ -35,6 +36,7 @@ interface Profile {
   email: string;
   linkedin: string;
   github: string;
+  phone?: string;
   status: string;
 }
 
@@ -58,9 +60,10 @@ const FALLBACK_PROFILE: Profile = {
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
   subtitle: 'Desarrollador Full Stack | En búsqueda activa',
   pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
-  email: 'manuel.cosovschi@example.com',
-  linkedin: 'linkedin.com/in/manuelcosou',
+  email: 'manucosovschi@gmail.com',
+  linkedin: 'linkedin.com/in/manuel-cosovschi',
   github: 'github.com/manuelcosou',
+  phone: '+54 223 538 3082',
   status: 'DISPONIBLE'
 };
 
@@ -73,10 +76,49 @@ const FALLBACK_PROJECTS: Project[] = [
     problem: 'Falta de personalización en rutinas de entrenamiento y seguimiento eficiente de telemetría.',
     solution: 'Me interesa el uso de datos/ML aplicado. Lo exploré en FitNow y quiero seguir aprendiendo.',
     stack: ['SwiftUI', 'NodeJS', 'MySQL', 'Python'],
-    highlights: ['Navegación paso a paso', 'Telemetría'],
-    challenges: ['Optimización de batería'],
-    architecture_diagram: '',
+    highlights: ['Navegación paso a paso', 'Telemetría en tiempo real', 'Ridge Regression'],
+    challenges: ['Optimización de batería', 'Manejo eficiente de datos GPS'],
+    architecture_diagram: 'https://picsum.photos/seed/fitnow/800/600',
     links: { github: '#' }
+  },
+  {
+    id: 2,
+    title: 'Las Cañas Mar de Cobo — Web',
+    type: 'Producción',
+    summary: 'Plataforma web de reservas para complejo turístico en Mar de Cobo. Wizard guiado con validación de disponibilidad en tiempo real.',
+    problem: 'Información operativa fragmentada y procesos de reserva manuales que generaban errores y consultas repetitivas.',
+    solution: 'Estandarización de políticas y validación de disponibilidad mediante wizard guiado, reduciendo la carga operativa del equipo.',
+    stack: ['React', 'Tailwind', 'NodeJS'],
+    highlights: ['Wizard de reservas paso a paso', 'Validación de disponibilidad en tiempo real', 'Políticas unificadas'],
+    challenges: ['Manejo de rangos bloqueados y excepciones', 'UX simplificada para usuarios no técnicos'],
+    architecture_diagram: 'https://picsum.photos/seed/lascanas/800/600',
+    links: { web: 'https://lascaniasmardecobo.com' }
+  },
+  {
+    id: 3,
+    title: 'Las Cañas — Agente WhatsApp',
+    type: 'Automatización',
+    summary: 'Agente conversacional de WhatsApp para gestión automatizada de reservas y FAQs del complejo, con derivación a humano para casos complejos.',
+    problem: 'Alta carga de consultas repetitivas por WhatsApp que consumía tiempo del equipo operativo.',
+    solution: 'Automatización con n8n y Meta API: el agente responde FAQs, gestiona reservas y escala a humano cuando es necesario.',
+    stack: ['n8n', 'JavaScript', 'WhatsApp API', 'Meta API'],
+    highlights: ['Flujos automatizados con n8n', 'Hand-off a humano para casos complejos', 'Sugerencia inteligente de fechas'],
+    challenges: ['Tono de marca consistente en respuestas', 'Manejo de excepciones y casos borde'],
+    architecture_diagram: 'https://picsum.photos/seed/bot/800/600',
+    links: { github: '#' }
+  },
+  {
+    id: 4,
+    title: 'Inmuebles Comerciales SRL',
+    type: 'Prácticas',
+    summary: 'Plataforma inmobiliaria para gestión de inmuebles comerciales. Panel de administración con mantenimiento de catálogo y clientes.',
+    problem: 'Necesidad de una herramienta interna para mantenimiento de catálogo y gestión de clientes.',
+    solution: 'Desarrollo full-stack con Angular y SQL para gestión eficiente de datos e integración con sistemas existentes.',
+    stack: ['Angular', 'SQL', '.NET'],
+    highlights: ['Panel de administración completo', 'Gestión de catálogo de inmuebles', 'Módulo de clientes'],
+    challenges: ['Integración con sistemas legados', 'Validación y consistencia de datos'],
+    architecture_diagram: 'https://picsum.photos/seed/inmuebles/800/600',
+    links: { web: '#' }
   }
 ];
 
@@ -88,6 +130,9 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(false);
   const [viewMode, setViewMode] = useState<'executive' | 'technical'>('executive');
   const [copied, setCopied] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,6 +185,31 @@ export default function App() {
   const handleDownloadCV = () => {
     logEvent('download_cv');
     window.open('/api/cv', '_blank');
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactStatus('sending');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm)
+      });
+      if (res.ok) {
+        setContactStatus('sent');
+        logEvent('contact_sent');
+        setTimeout(() => {
+          setContactOpen(false);
+          setContactStatus('idle');
+          setContactForm({ name: '', email: '', message: '' });
+        }, 2500);
+      } else {
+        setContactStatus('error');
+      }
+    } catch {
+      setContactStatus('error');
+    }
   };
 
   return (
@@ -472,6 +542,97 @@ export default function App() {
         </div>
       </main>
 
+      {/* Contact Modal */}
+      <AnimatePresence>
+        {contactOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            onClick={(e) => { if (e.target === e.currentTarget) setContactOpen(false); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#0f172a] border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-2xl relative"
+            >
+              <button
+                onClick={() => setContactOpen(false)}
+                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              {contactStatus === 'sent' ? (
+                <div className="text-center py-8">
+                  <CheckCircle size={48} className="text-sky-400 mx-auto mb-4" />
+                  <h3 className="text-white font-bold text-xl mb-2">¡Mensaje enviado!</h3>
+                  <p className="text-slate-400">Te respondo a la brevedad.</p>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-white font-bold text-2xl mb-2">Hablemos</h3>
+                  <p className="text-slate-400 text-sm mb-6">Dejame tu mensaje y te respondo pronto.</p>
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1 block">Nombre</label>
+                      <input
+                        type="text"
+                        required
+                        minLength={2}
+                        value={contactForm.name}
+                        onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                        className="w-full bg-[#0b1120] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-400/50 transition-colors"
+                        placeholder="Tu nombre"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1 block">Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={contactForm.email}
+                        onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
+                        className="w-full bg-[#0b1120] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-400/50 transition-colors"
+                        placeholder="tu@email.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1 block">Mensaje</label>
+                      <textarea
+                        required
+                        minLength={10}
+                        rows={4}
+                        value={contactForm.message}
+                        onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))}
+                        className="w-full bg-[#0b1120] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-400/50 transition-colors resize-none"
+                        placeholder="¿De qué empresa sos? ¿En qué puedo ayudarte?"
+                      />
+                    </div>
+                    {contactStatus === 'error' && (
+                      <p className="text-red-400 text-sm">Hubo un error. Escribime directo a manucosovschi@gmail.com</p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={contactStatus === 'sending'}
+                      className="w-full bg-sky-400 hover:bg-sky-500 disabled:opacity-60 text-slate-900 py-3.5 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+                    >
+                      {contactStatus === 'sending' ? (
+                        <span>Enviando...</span>
+                      ) : (
+                        <><Send size={16} /> Enviar mensaje</>
+                      )}
+                    </button>
+                  </form>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Footer */}
       <footer className="bg-[#0b1120] border-t border-white/5 py-20 px-6">
         <div className="max-w-[1100px] mx-auto grid md:grid-cols-2 gap-16">
@@ -480,6 +641,7 @@ export default function App() {
             <div className="flex flex-col gap-6">
               {[
                 { icon: Mail, text: profile.email, href: `mailto:${profile.email}` },
+                { icon: Phone, text: profile.phone || '+54 223 538 3082', href: `tel:${(profile.phone || '').replace(/\s/g, '')}` },
                 { icon: LinkIcon, text: profile.linkedin, href: `https://${profile.linkedin}` },
                 { icon: Github, text: profile.github, href: `https://${profile.github}` }
               ].map((link, i) => (
@@ -510,8 +672,8 @@ export default function App() {
             
             <div className="w-full md:w-auto mt-12 md:mt-0">
               <div className="flex flex-col items-center md:items-end gap-3">
-                <button 
-                  onClick={() => { logEvent('click_contact'); alert('¡Gracias! Me pondré en contacto pronto.'); }}
+                <button
+                  onClick={() => { logEvent('click_contact'); setContactOpen(true); }}
                   className="w-full md:w-auto bg-sky-400 hover:bg-sky-500 text-slate-900 px-10 py-5 rounded-xl text-lg font-bold shadow-2xl shadow-sky-400/20 transition-all active:scale-95"
                 >
                   Hablemos
