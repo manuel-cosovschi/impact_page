@@ -335,25 +335,28 @@ app.post("/api/contact", async (req: any, res: any) => {
     if (!result.success) return res.status(400).json({ error: 'Invalid data' });
     const { name, email, message } = result.data;
     try { db.saveContact(name, email, message); } catch (_) {}
-    if (process.env.RESEND_API_KEY) {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+    console.log('[EMAIL] user set:', !!emailUser, '| pass set:', !!emailPass);
+    if (emailUser && emailPass) {
       try {
-        const emailRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: 'Portfolio <onboarding@resend.dev>',
-            to: ['manucosovschi@gmail.com'],
-            subject: `Nuevo mensaje de ${name} — Portfolio`,
-            html: `<h2>Nuevo contacto</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
-          })
+        const nodemailer = await import('nodemailer');
+        const transporter = nodemailer.default.createTransport({
+          service: 'gmail',
+          auth: { user: emailUser, pass: emailPass }
         });
-        const emailBody = await emailRes.json();
-        console.log('[RESEND] status:', emailRes.status, 'body:', JSON.stringify(emailBody));
-      } catch (e) {
-        console.error('[RESEND] fetch error:', e);
+        const info = await transporter.sendMail({
+          from: `"Portfolio" <${emailUser}>`,
+          to: 'manucosovschi@gmail.com',
+          subject: `Nuevo mensaje de ${name} — Portfolio`,
+          html: `<h2>Nuevo contacto desde tu portfolio</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
+        });
+        console.log('[EMAIL] sent OK, messageId:', info.messageId);
+      } catch (e: any) {
+        console.error('[EMAIL] error:', e?.message || e);
       }
     } else {
-      console.log('[RESEND] No API key set');
+      console.log('[EMAIL] credentials not configured');
     }
     res.status(201).json({ status: "ok" });
   } catch (e) {
