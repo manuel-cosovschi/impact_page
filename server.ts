@@ -337,7 +337,7 @@ app.post("/api/contact", async (req: any, res: any) => {
     try { db.saveContact(name, email, message); } catch (_) {}
     if (process.env.RESEND_API_KEY) {
       try {
-        await fetch('https://api.resend.com/emails', {
+        const emailRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -347,9 +347,13 @@ app.post("/api/contact", async (req: any, res: any) => {
             html: `<h2>Nuevo contacto</h2><p><strong>Nombre:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`
           })
         });
+        const emailBody = await emailRes.json();
+        console.log('[RESEND] status:', emailRes.status, 'body:', JSON.stringify(emailBody));
       } catch (e) {
-        console.error('Email error:', e);
+        console.error('[RESEND] fetch error:', e);
       }
+    } else {
+      console.log('[RESEND] No API key set');
     }
     res.status(201).json({ status: "ok" });
   } catch (e) {
