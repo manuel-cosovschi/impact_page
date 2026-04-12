@@ -58,7 +58,7 @@ interface Project {
 const FALLBACK_PROFILE: Profile = {
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Desarrollador Full Stack | En búsqueda activa',
+  subtitle: 'Desarrollador Full Stack | Egreso julio 2026',
   pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
   email: 'manucosovschi@gmail.com',
   linkedin: 'linkedin.com/in/manuel-cosovschi',
@@ -171,7 +171,7 @@ export default function App() {
 
   const handleCopyPitch = () => {
     const summary = `
-- Estudiante avanzado de Ingeniería en Sistemas
+- Estudiante avanzado de Ingeniería en Sistemas (egreso julio 2026)
 - Proyectos reales (FitNow, Las Cañas web, bot WhatsApp, prácticas Inmuebles)
 - Valor diferencial: Me identifico con culturas de feedback, iteración y foco en el usuario.
 - Objetivo: Aprender rápido, adaptarme al equipo y aportar valor desde el día uno.
@@ -223,7 +223,7 @@ export default function App() {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(9.5);
       doc.setTextColor(...gray);
-      wrapped('Software Engineer junior próximo a graduarse, con experiencia práctica en desarrollo de aplicaciones web y mobile full-stack. He desarrollado proyectos reales utilizando Node.js, Express, SwiftUI y bases de datos SQL. Busco incorporarme a un equipo de desarrollo para seguir aprendiendo y aportar valor desde el primer día.', margin, W, 9.5);
+      wrapped('Estudiante avanzado de Ingeniería en Sistemas (egreso julio 2026), con experiencia práctica en desarrollo de aplicaciones web y mobile full-stack. He construido proyectos reales utilizando Node.js, Express, React, SwiftUI y bases de datos SQL. Busco incorporarme a un equipo de desarrollo donde pueda aportar valor y seguir creciendo.', margin, W, 9.5);
       y += 4;
       line();
 
@@ -418,7 +418,7 @@ export default function App() {
               <div className="flex-1 min-w-0">
               <div className="flex flex-wrap gap-3 mb-6">
                 <span className="bg-sky-400/10 border border-sky-400/20 text-sky-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Fingerprint size={12} /> En búsqueda activa
+                  <Fingerprint size={12} /> Egreso julio 2026
                 </span>
                 {[
                   { icon: Layers, text: 'Proyectos para aprender haciendo' },
@@ -469,7 +469,7 @@ export default function App() {
           <section id="propuesta" className="grid md:grid-cols-12 gap-8 items-start">
             <div className="md:col-span-4">
               <h2 className="text-3xl font-bold text-white mb-2">Mi Propuesta de Valor</h2>
-              <p className="text-slate-400">Busco mi primera experiencia formal en un equipo que impulse el aprendizaje continuo y el crecimiento profesional.</p>
+              <p className="text-slate-400">Busco incorporarme a un equipo técnico donde pueda contribuir, aprender y crecer profesionalmente.</p>
             </div>
             <div className="md:col-span-8">
               <motion.div 
@@ -824,7 +824,7 @@ export default function App() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-400" />
                   </span>
-                  <span className="text-white font-bold text-lg">Buscando primer rol formal</span>
+                  <span className="text-white font-bold text-lg">Disponible para nuevas oportunidades</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium">Me gusta proponer mejoras, pero también alinearme con prioridades y ajustar con feedback del equipo.</p>
               </div>

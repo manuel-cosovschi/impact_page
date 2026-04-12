@@ -56,7 +56,7 @@ const SEED_PROFILE = {
   id: 1,
   name: 'Manuel Cosovschi',
   title: 'Estudiante avanzado de Ingeniería en Sistemas',
-  subtitle: 'Desarrollador Full Stack | En búsqueda activa',
+  subtitle: 'Desarrollador Full Stack | Egreso julio 2026',
   pitch: 'Me motiva integrar un equipo técnico donde pueda contribuir y seguir creciendo. Comparto el enfoque en el usuario y la mejora continua. He construido proyectos end-to-end para aprender haciendo, y busco un equipo donde pueda iterar, recibir feedback y aportar valor desde el primer día.',
   email: 'manucosovschi@gmail.com',
   linkedin: 'linkedin.com/in/manuel-cosovschi',
